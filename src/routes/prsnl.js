@@ -1,8 +1,9 @@
 import express from "express";
+import multer from "multer";
 const router=express.Router();
 
-router.get('/',(req,res)=>{
-    res.send("Hello from Avadhesh");
+router.post('/',async(req,res)=>{
+
 })
 
 export default router;
