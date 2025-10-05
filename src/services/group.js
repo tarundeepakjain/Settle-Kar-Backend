@@ -1,8 +1,21 @@
 import Group from "../models/group.js";
+import tracker from "../models/dummy.js";
 import pg from "../db/pg.js"; 
 class GroupService {
+  async generateId() {
+  let groupId;
+  let exists = true;
+
+  while (exists) {
+    groupId = Math.floor(100000 + Math.random() * 900000);
+    exists = await Group.collection('groups').findOne({ groupId });
+  }
+
+  return groupId;
+}
   async createGroup({ gname, desc, member, adminid }) {
-    const group = await Group.create({
+  
+    const group=await Group.create({
       name: gname,
       description: desc,
       members: member,

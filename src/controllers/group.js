@@ -8,6 +8,7 @@ class GroupController {
       res.status(500).json({ message: error.message });
     }
   }
+  
   async addMember(req, res) {
     try {
       await GroupService.addMember(req.body);

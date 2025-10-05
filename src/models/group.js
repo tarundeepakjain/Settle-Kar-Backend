@@ -7,7 +7,8 @@ const groupSchema = new mongoose.Schema(
 
     members: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
 
-    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" }
+    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    Grpid:{type:String }
   },
   { timestamps: true }
 );

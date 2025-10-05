@@ -1,6 +1,6 @@
 
 const Expense = require('../models/Expenses');
-const Group = require('../models/Group');
+const Group = require('../models/Grp');
 let groups = {}; 
 exports.addExpense = (req, res) => {
   const { groupId, paidBy, amount, description, splitBetween } = req.body;
