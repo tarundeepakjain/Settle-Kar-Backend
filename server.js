@@ -16,8 +16,7 @@ app.use('/',home);
 app.use('/auth',auth);
 app.use('/group',Group);
 app.use('/split',split);
-app.use(express.json());
-app.use("/api", expenseRoutes);
+// app.use("/api", expenseRoutes);
 
 
 app.listen(PORT,()=>{

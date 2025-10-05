@@ -1,26 +1,32 @@
 import Group from "../models/group.js";
-import tracker from "../models/dummy.js";
+
 import pg from "../db/pg.js"; 
 class GroupService {
-  async generateId() {
+async generateId() {
   let groupId;
   let exists = true;
 
+ const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
   while (exists) {
-    groupId = Math.floor(100000 + Math.random() * 900000);
-    exists = await Group.collection('groups').findOne({ groupId });
+    groupId = Array.from({ length: 8 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+    exists = await Group.findOne({groupId });
   }
 
   return groupId;
-}
-  async createGroup({ gname, desc, member, adminid }) {
+ }
   
-    const group=await Group.create({
-      name: gname,
-      description: desc,
-      members: member,
-      createdBy: adminid,
-    });
+async createGroup({ name, description, members, createdBy }) {
+  const inviteid=await this.generateId();
+  const group = await Group.create({
+    name,
+    description,
+    members,
+    createdBy,
+    inviteid,
+  });
+
+
     /*
     const result = await pool.query(
       "INSERT INTO groups (name, description, created_by) VALUES ($1,$2,$3) RETURNING *",
