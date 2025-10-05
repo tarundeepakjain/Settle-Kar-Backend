@@ -11,6 +11,12 @@ const app=express();
 app.use(express.json());
 const PORT=process.env.PORT || 5001;
 
+const allowedOrigin = 'http://localhost:8081'; // or your frontend URL
+
+app.use(cors({
+  origin: allowedOrigin,
+  credentials: true
+}));
 mongo();
 app.use('/',home);
 app.use('/auth',auth);
@@ -19,6 +25,6 @@ app.use('/split',split);
 // app.use("/api", expenseRoutes);
 
 
-app.listen(PORT,()=>{
+app.listen(PORT,'0.0.0.0',()=>{
     console.log("server running on:",PORT);
 });
