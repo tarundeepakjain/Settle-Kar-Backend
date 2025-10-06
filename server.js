@@ -14,8 +14,9 @@ const PORT=process.env.PORT || 5001;
 const allowedOrigin = 'http://localhost:8081';
 
 app.use(cors({
-  origin: allowedOrigin,
-  credentials: true
+  origin: "*", 
+  methods: ["GET", "POST"],
+  allowedHeaders: ["Content-Type", "Authorization"]
 }));
 mongo();
 app.use('/',home);
