@@ -10,8 +10,10 @@ const userSchema = new mongoose.Schema({
       ref: "Group",
     },
   ],
-},
-  { timestamps: true }
+  currentRefreshToken: { type: String, default: null },
+  createdAt: { type: Date, default: Date.now }
+}
+ 
 );
 const User = mongoose.model("User", userSchema);
 

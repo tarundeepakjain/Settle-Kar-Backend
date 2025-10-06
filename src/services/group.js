@@ -1,5 +1,4 @@
 import Group from "../models/group.js";
-
 import pg from "../db/pg.js"; 
 class GroupService {
 async generateId() {
