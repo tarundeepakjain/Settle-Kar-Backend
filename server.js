@@ -11,7 +11,7 @@ const app=express();
 app.use(express.json());
 const PORT=process.env.PORT || 5001;
 
-const allowedOrigin = 'http://localhost:8081'; // or your frontend URL
+const allowedOrigin = 'http://localhost:8081';
 
 app.use(cors({
   origin: allowedOrigin,

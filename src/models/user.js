@@ -4,8 +4,12 @@ const userSchema = new mongoose.Schema({
   name: { type: String, required: true, unique: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-   groups: [{ groupId: { type: mongoose.Schema.Types.ObjectId, ref: "Group", required: true } }],
-   amountowed:{type:Number, default:0}
+  groups: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Group",
+    },
+  ],
 },
   { timestamps: true }
 );

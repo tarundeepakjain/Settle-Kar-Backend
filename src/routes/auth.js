@@ -5,6 +5,7 @@ const router=express.Router();
 
 router.post('/',async(req,res)=>{
     const {name,email,password}=req.body;
+      console.log(req.body);
     try {
         const exist=await user.findOne({email});
         if(exist) return res.status(400).json({ error: "Email already exists!" });
@@ -20,6 +21,7 @@ router.post('/',async(req,res)=>{
 })
 router.post('/login',async(req,res)=>{
     const {email,password}=req.body;
+    console.log(req.body);
     try {
         const exist=await user.findOne({email});
         if(!exist) return res.status(400).json({ error: "User does not exist,Kindly Signup first! " });

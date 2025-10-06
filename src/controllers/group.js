@@ -18,7 +18,11 @@ class GroupController {
       }
       group.members.push(userid);
       await group.save();
-
+      if (user.members.includes(group._id)) {
+        return res.status(400).json({ message: "User already in group" });
+      }
+     user.groups.push(group._id);
+     await user.save();
       res.status(200).json({
         message: "User added to group successfully",
         group,
@@ -30,8 +34,12 @@ class GroupController {
   async createGroup(req, res) {
     try {
        console.log(req.body);
+        const { userid } = req.body;
+        const user = await User.findById(userid);
       const group = await GroupService.createGroup(req.body);
       await group.save();
+      user.groups.push(group._id);
+       await user.save();
       res.status(201).json({ message: "Group created successfully", group });
     } catch (error) {
       res.status(500).json({ message: error.message });
