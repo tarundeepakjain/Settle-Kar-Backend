@@ -16,13 +16,15 @@ class GroupController {
       if (group.members.includes(userid)) {
         return res.status(400).json({ message: "User already in group" });
       }
+      console.log(group._id);
       group.members.push(userid);
       await group.save();
-      if (user.members.includes(group._id)) {
+      if (user.groups.includes(group._id)) {
         return res.status(400).json({ message: "User already in group" });
       }
      user.groups.push(group._id);
      await user.save();
+     console.log("grp added in user");
       res.status(200).json({
         message: "User added to group successfully",
         group,
@@ -34,13 +36,25 @@ class GroupController {
   async createGroup(req, res) {
     try {
        console.log(req.body);
-        const { userid } = req.body;
-        const user = await User.findById(userid);
+        const {  members, createdBy } = req.body;
+        
       const group = await GroupService.createGroup(req.body);
       await group.save();
-      user.groups.push(group._id);
-       await user.save();
-      res.status(201).json({ message: "Group created successfully", group });
+       const all = new Set(members || []);
+    all.add(createdBy); 
+    for (const memberId of all) {
+      const user = await User.findById(memberId);
+      if (user) {
+        if (!user.groups.includes(group._id)) {
+          user.groups.push(group._id);
+          await user.save();
+        }
+      } else {
+        console.warn(`User ${memberId} not found, skipping`);
+      }
+      
+    }
+    console.log("grp created and valid users added");
     } catch (error) {
       res.status(500).json({ message: error.message });
     }

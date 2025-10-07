@@ -1,18 +1,19 @@
 import Group from "../models/group.js";
 import pg from "../db/pg.js"; 
 class GroupService {
+     #groupId;
 async generateId() {
-  let groupId;
+
   let exists = true;
 
  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
   while (exists) {
-    groupId = Array.from({ length: 8 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
-    exists = await Group.findOne({groupId });
+    this.#groupId = Array.from({ length: 8 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+    exists = await Group.findOne({ inviteid: this.#groupId });
   }
 
-  return groupId;
+  return this.#groupId;
  }
   
 async createGroup({ name, description, members, createdBy }) {
