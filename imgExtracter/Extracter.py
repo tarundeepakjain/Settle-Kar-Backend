@@ -8,6 +8,9 @@ def extract(img):
     grayBG = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     thresh = cv2.threshold(grayBG, 150, 255, cv2.THRESH_BINARY)[1] #Pixel Value> 150 -> 255 (White) #Pixel Value<150 -> 0(Black)
     text = pytesseract.image_to_string(thresh)
+    '''cv2.imshow("Gray Image", grayBG)
+    cv2.waitKey(0)  
+    cv2.destroyAllWindows()'''
 
     findAmount = r'₹?\s?(\d+(?:,\d{3})*(?:\.\d{1,2})?)' #Finding the amounts by searching the Indian Currency
 
@@ -25,3 +28,4 @@ def extract(img):
 
 Bill = extract("testBill.png")
 print(Bill)
+
