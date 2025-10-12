@@ -33,32 +33,40 @@ class GroupController {
       res.status(500).json({ message: error.message });
     }
   }
-  async createGroup(req, res) {
-    try {
-       console.log(req.body);
-        const {  members, createdBy } = req.body;
-        
-      const group = await GroupService.createGroup(req.body);
-      await group.save();
-       const all = new Set(members || []);
-    all.add(createdBy); 
-    for (const memberId of all) {
+ async createGroup(req, res) {
+  try {
+    const createdBy = req.user?.id; // from authenticate middleware
+    if (!createdBy) return res.status(401).json({ message: "Unauthorized" });
+
+    const { name, description, members = [] } = req.body;
+
+    // Ensure creator is part of the group
+    const allMembers = new Set([...(members || []), createdBy]);
+
+    // Pass the correct members array to GroupService
+    const group = await GroupService.createGroup({
+      name,
+      description,
+      members: Array.from(allMembers), // <-- important
+      createdBy,
+    });
+
+    // Update each user's groups array
+    for (const memberId of allMembers) {
       const user = await User.findById(memberId);
-      if (user) {
-        if (!user.groups.includes(group._id)) {
-          user.groups.push(group._id);
-          await user.save();
-        }
-      } else {
-        console.warn(`User ${memberId} not found, skipping`);
+      if (user && !user.groups.includes(group._id)) {
+        user.groups.push(group._id);
+        await user.save();
       }
-      
     }
-    console.log("grp created and valid users added");
-    } catch (error) {
-      res.status(500).json({ message: error.message });
-    }
+
+    console.log("Group created and users updated");
+    res.status(201).json(group);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
+}
+
   
   async addMember(req, res) {
     try {

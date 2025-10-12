@@ -11,6 +11,7 @@ const userSchema = new mongoose.Schema({
     },
   ],
   currentRefreshToken: { type: String, default: null },
+  otp:{type: Number},
   createdAt: { type: Date, default: Date.now }
 }
  

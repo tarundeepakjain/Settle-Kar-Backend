@@ -2,11 +2,22 @@ import express from "express";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import user from "../models/user.js";
-
+import nodemailer from 'nodemailer';
 const router = express.Router();
+const otpStore = new Map();
 
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER, 
+    pass: process.env.EMAIL_PASS   
+  }
+});
 const ACCESS_SECRET = process.env.ACCESS_SECRET || "ava";
 const REFRESH_SECRET = process.env.REFRESH_SECRET || "ava";
+function generateOTP() {
+  return Math.floor(100000 + Math.random() * 900000);
+}
 
 function generateAccessToken(user) {
   return jwt.sign({ id: user._id, email: user.email }, ACCESS_SECRET, { expiresIn: "10m" });
@@ -113,5 +124,57 @@ router.get("/me", async (req, res) => {
     return res.status(401).json({ error: "Invalid access token" });
   }
 });
+router.post('/forgot', async (req, res) => {
+  try {
+    const { email } = req.body;
+    // const exist = await user.findOne({ email });
+    // if (!exist) return res.status(400).json({ error: "User not found!" });
 
+    const otp = generateOTP(); 
+
+    otpStore.set(email, { otp, expiresAt: Date.now() + 5 * 60 * 1000 }); // 5 mins
+    console.log("OTP for", email, "=", otp);
+
+    await transporter.sendMail({
+      from: `"SettleKar" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: "Password Reset OTP",
+      html: `
+        <div style="font-family:Arial,sans-serif">
+          <h2>OTP Verification for Resetting Password on SettleKar</h2>
+          <p>Your One-Time Password (OTP) is:</p>
+          <h1 style="color:#4CAF50">${otp}</h1>
+          <p>This OTP is valid for 5 minutes.</p>
+        </div>
+      `,
+    });
+
+    return res.status(200).json({ message: "OTP sent to email!" });
+  } catch (error) {
+    console.error("Error sending OTP email:", error);
+    return res.status(500).json({ error: "Failed to send OTP" });
+  }
+});
+
+router.post('/verify-otp', async (req, res) => {
+  const { email, otp } = req.body;
+
+  const record = otpStore.get(email);
+  if (!record) {
+    return res.status(400).json({ error: "OTP not found or expired. Please try again." });
+  }
+
+  if (Date.now() > record.expiresAt) {
+    otpStore.delete(email);
+    return res.status(400).json({ error: "OTP expired" });
+  }
+
+  if (parseInt(otp) !== record.otp) {
+    return res.status(400).json({ error: "Invalid OTP" });
+  }
+
+  otpStore.delete(email);
+
+  return res.status(200).json({ message: "OTP verified successfully!" });
+});
 export default router;
