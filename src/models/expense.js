@@ -11,9 +11,9 @@ const expenseSchema = new mongoose.Schema(
     splits: [
       {
         user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-        amount: { type: Number,default:0 }
-      }
-    ]
+        amount: { type: Number, default: 0 },
+      },
+    ],
   },
   { timestamps: true }
 );

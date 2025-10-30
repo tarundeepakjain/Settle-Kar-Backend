@@ -1,20 +1,23 @@
 import express from "express";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
-import user from "../models/user.js";
-import nodemailer from 'nodemailer';
+import nodemailer from "nodemailer";
+import User from "../tarun/user.js";
+
 const router = express.Router();
 const otpStore = new Map();
 
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  service: "gmail",
   auth: {
-    user: process.env.EMAIL_USER, 
-    pass: process.env.EMAIL_PASS   
-  }
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
 });
+
 const ACCESS_SECRET = process.env.ACCESS_SECRET || "ava";
 const REFRESH_SECRET = process.env.REFRESH_SECRET || "ava";
+
 function generateOTP() {
   return Math.floor(100000 + Math.random() * 900000);
 }
@@ -29,36 +32,33 @@ function generateRefreshToken(user) {
 
 router.post("/", async (req, res) => {
   const { name, email, password } = req.body;
-
   try {
-    const exist = await user.findOne({ email });
+    const exist = await User.findOne({ email });
     if (exist) return res.status(400).json({ error: "Email already exists!" });
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const User = new user({ name, email, password: hashedPassword });
-    await User.save();
+    const newUser = new User(name, email, hashedPassword);
+    const savedUser = await newUser.save();
 
-    const accessToken = generateAccessToken(User);
-    const refreshToken = generateRefreshToken(User);
-    User.currentRefreshToken = refreshToken;
-    await User.save();
+    const accessToken = generateAccessToken(savedUser);
+    const refreshToken = generateRefreshToken(savedUser);
+    savedUser.currentRefreshToken = refreshToken;
+    await savedUser.save();
 
     return res.json({
       accessToken,
       refreshToken,
-      user: { id: User._id, email: User.email },
+      user: { id: savedUser._id, email: savedUser.email },
     });
   } catch (error) {
-    console.error("Error:", error);
     return res.status(500).json({ error: "Server error occurred!" });
   }
 });
 
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
-
   try {
-    const exist = await user.findOne({ email });
+    const exist = await User.findOne({ email });
     if (!exist) return res.status(400).json({ error: "User does not exist. Kindly signup first!" });
 
     const isMatch = await bcrypt.compare(password, exist.password);
@@ -66,7 +66,6 @@ router.post("/login", async (req, res) => {
 
     const accessToken = generateAccessToken(exist);
     const refreshToken = generateRefreshToken(exist);
-
     exist.currentRefreshToken = refreshToken;
     await exist.save();
 
@@ -75,8 +74,7 @@ router.post("/login", async (req, res) => {
       refreshToken,
       user: { id: exist._id, email: exist.email },
     });
-  } catch (error) {
-    console.error("Error:", error);
+  } catch {
     return res.status(500).json({ error: "Server error occurred!" });
   }
 });
@@ -87,22 +85,19 @@ router.post("/refresh", async (req, res) => {
 
   try {
     const payload = jwt.verify(refreshToken, REFRESH_SECRET);
-    const User = await user.findById(payload.id);
-    if (!User) return res.status(401).json({ error: "User not found" });
+    const existingUser = await User.findById(payload.id);
+    if (!existingUser) return res.status(401).json({ error: "User not found" });
 
-    if (!User.currentRefreshToken || User.currentRefreshToken !== refreshToken) {
+    if (!existingUser.currentRefreshToken || existingUser.currentRefreshToken !== refreshToken)
       return res.status(401).json({ error: "Refresh token revoked" });
-    }
 
-    const newAccessToken = generateAccessToken(User);
-    const newRefreshToken = generateRefreshToken(User);
-
-    User.currentRefreshToken = newRefreshToken;
-    await User.save();
+    const newAccessToken = generateAccessToken(existingUser);
+    const newRefreshToken = generateRefreshToken(existingUser);
+    existingUser.currentRefreshToken = newRefreshToken;
+    await existingUser.save();
 
     return res.json({ accessToken: newAccessToken, refreshToken: newRefreshToken });
-  } catch (err) {
-    console.error(err);
+  } catch {
     return res.status(401).json({ error: "Invalid refresh token" });
   }
 });
@@ -111,29 +106,21 @@ router.get("/me", async (req, res) => {
   try {
     const auth = req.headers.authorization;
     if (!auth) return res.status(401).json({ error: "No auth header" });
-
     const token = auth.split(" ")[1];
     const payload = jwt.verify(token, ACCESS_SECRET);
-
-    const User = await user.findById(payload.id).select("-password -currentRefreshToken");
-    if (!User) return res.status(404).json({ error: "User not found" });
-
-    return res.json(User);
-  } catch (err) {
-    console.error(err);
+    const user = await User.findById(payload.id).select("-password -currentRefreshToken");
+    if (!user) return res.status(404).json({ error: "User not found" });
+    return res.json(user);
+  } catch {
     return res.status(401).json({ error: "Invalid access token" });
   }
 });
-router.post('/forgot', async (req, res) => {
+
+router.post("/forgot", async (req, res) => {
   try {
     const { email } = req.body;
-    // const exist = await user.findOne({ email });
-    // if (!exist) return res.status(400).json({ error: "User not found!" });
-
-    const otp = generateOTP(); 
-
-    otpStore.set(email, { otp, expiresAt: Date.now() + 5 * 60 * 1000 }); // 5 mins
-    console.log("OTP for", email, "=", otp);
+    const otp = generateOTP();
+    otpStore.set(email, { otp, expiresAt: Date.now() + 5 * 60 * 1000 });
 
     await transporter.sendMail({
       from: `"SettleKar" <${process.env.EMAIL_USER}>`,
@@ -148,33 +135,23 @@ router.post('/forgot', async (req, res) => {
         </div>
       `,
     });
-
     return res.status(200).json({ message: "OTP sent to email!" });
-  } catch (error) {
-    console.error("Error sending OTP email:", error);
+  } catch {
     return res.status(500).json({ error: "Failed to send OTP" });
   }
 });
 
-router.post('/verify-otp', async (req, res) => {
+router.post("/verify-otp", async (req, res) => {
   const { email, otp } = req.body;
-
   const record = otpStore.get(email);
-  if (!record) {
-    return res.status(400).json({ error: "OTP not found or expired. Please try again." });
-  }
-
+  if (!record) return res.status(400).json({ error: "OTP not found or expired. Please try again." });
   if (Date.now() > record.expiresAt) {
     otpStore.delete(email);
     return res.status(400).json({ error: "OTP expired" });
   }
-
-  if (parseInt(otp) !== record.otp) {
-    return res.status(400).json({ error: "Invalid OTP" });
-  }
-
+  if (parseInt(otp) !== record.otp) return res.status(400).json({ error: "Invalid OTP" });
   otpStore.delete(email);
-
   return res.status(200).json({ message: "OTP verified successfully!" });
 });
+
 export default router;

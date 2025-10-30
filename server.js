@@ -12,22 +12,25 @@ app.use(express.json());
 const PORT=process.env.PORT || 5001;
 
 
-const allowedOrigins = [
-  "http://localhost:8081", // Expo web
-  "exp://127.0.0.1:19000"  // Expo Go dev URL (optional)
-];
+
 
 app.use(cors({
-  origin: function(origin, callback){
-    if(!origin || allowedOrigins.includes(origin)){
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true); // mobile apps send no origin
+    if (
+      origin.includes("localhost") ||
+      origin.includes("127.0.0.1") ||
+      origin.includes("192.168.") || // allow all local IPs
+      origin.startsWith("exp://")    // allow Expo dev client
+    ) {
       callback(null, true);
     } else {
-      callback(new Error('Not allowed by CORS'));
+      callback(new Error("Not allowed by CORS"));
     }
   },
-  methods: ["GET","POST"],
+  methods: ["GET", "POST", "PUT", "DELETE"],
   allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: true
+  credentials: true,
 }));
 mongo();
 app.use('/',home);
