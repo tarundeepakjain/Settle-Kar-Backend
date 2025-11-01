@@ -3,27 +3,12 @@ import jwt from "jsonwebtoken";
 import GroupController from "../controllers/group.js";
 import Group from "../models/group.js";
 import Expense from "../models/expense.js";
-
+import authenticate from "../middleware/auth.js";
 const router = express.Router();
 const ACCESS_SECRET = process.env.ACCESS_SECRET || "ava";
 
-// 🔹 Auth middleware
-const authenticate = (req, res, next) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader) return res.status(401).json({ message: "No token provided" });
 
-  const token = authHeader.split(" ")[1];
-  try {
-    const decoded = jwt.verify(token, ACCESS_SECRET);
-    req.user = decoded;
-    next();
-  } catch (err) {
-    return res.status(401).json({ message: "Invalid or expired token" });
-  }
-};
-
-// 🔹 Get user's groups
-router.get("/my-groups", authenticate, async (req, res) => {
+router.get("/my-groups", async (req, res) => {
   try {
     const groups = await Group.find({ members: req.user.id }).populate("members", "name email");
     res.status(200).json(groups);
@@ -32,16 +17,12 @@ router.get("/my-groups", authenticate, async (req, res) => {
   }
 });
 
-// 🔹 Create new group
-router.post("/new", authenticate, GroupController.createGroup);
+router.post("/new",  GroupController.createGroup);
+router.post("/invite",  GroupController.Invite);
+router.post("/add-member",  GroupController.addMember);
+router.delete("/delete-member",  GroupController.deleteMember);
 
-// 🔹 Member operations
-router.post("/invite", authenticate, GroupController.Invite);
-router.post("/add-member", authenticate, GroupController.addMember);
-router.delete("/delete-member", authenticate, GroupController.deleteMember);
-
-// 🔹 Get single group by ID (with expenses)
-router.get("/:groupId", authenticate, async (req, res) => {
+router.get("/:groupId", async (req, res) => {
   try {
     const group = await Group.findById(req.params.groupId)
       .populate("members", "name email")
@@ -67,8 +48,7 @@ router.get("/:groupId", authenticate, async (req, res) => {
   }
 });
 
-// 🔹 Get all expenses for group
-router.get("/:groupId/expenses", authenticate, async (req, res) => {
+router.get("/:groupId/expenses", async (req, res) => {
   try {
     const group = await Group.findById(req.params.groupId);
     if (!group) return res.status(404).json({ message: "Group not found" });
@@ -83,8 +63,7 @@ router.get("/:groupId/expenses", authenticate, async (req, res) => {
   }
 });
 
-// 🔹 Add expense to group
-router.post("/:groupId/expenses", authenticate, async (req, res) => {
+router.post("/:groupId/expenses",  async (req, res) => {
   const { description, amount, paidById, splits } = req.body;
   if (!description || !amount || !paidById) {
     return res.status(400).json({ message: "Missing required fields" });

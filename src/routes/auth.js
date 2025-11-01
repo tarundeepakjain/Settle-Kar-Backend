@@ -23,7 +23,7 @@ function generateOTP() {
 }
 
 function generateAccessToken(user) {
-  return jwt.sign({ id: user._id, email: user.email }, ACCESS_SECRET, { expiresIn: "10m" });
+  return jwt.sign({ id: user._id,name: user.name, email: user.email }, ACCESS_SECRET, { expiresIn: "10m" });
 }
 
 function generateRefreshToken(user) {
@@ -48,7 +48,7 @@ router.post("/", async (req, res) => {
     return res.json({
       accessToken,
       refreshToken,
-      user: { id: savedUser._id, email: savedUser.email },
+      user: { id: savedUser._id,name: savedUser.name, email: savedUser.email },
     });
   } catch (error) {
     return res.status(500).json({ error: "Server error occurred!" });
@@ -68,11 +68,10 @@ router.post("/login", async (req, res) => {
     const refreshToken = generateRefreshToken(exist);
     exist.currentRefreshToken = refreshToken;
     await exist.save();
-
     return res.json({
       accessToken,
       refreshToken,
-      user: { id: exist._id, email: exist.email },
+      user: { id: exist._id,name:exist.name, email: exist.email },
     });
   } catch {
     return res.status(500).json({ error: "Server error occurred!" });
