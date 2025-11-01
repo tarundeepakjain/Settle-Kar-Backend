@@ -4,6 +4,7 @@ import GroupController from "../controllers/group.js";
 import Group from "../models/group.js";
 import Expense from "../models/expense.js";
 import authenticate from "../middleware/auth.js";
+import { GroupExpense } from "../tarun/expense.js";
 const router = express.Router();
 const ACCESS_SECRET = process.env.ACCESS_SECRET || "ava";
 
@@ -63,36 +64,47 @@ router.get("/:groupId/expenses", async (req, res) => {
   }
 });
 
-router.post("/:groupId/expenses",  async (req, res) => {
+router.post("/:groupId/expenses", async (req, res) => {
   const { description, amount, paidById, splits } = req.body;
+
   if (!description || !amount || !paidById) {
     return res.status(400).json({ message: "Missing required fields" });
   }
 
   try {
+    // ✅ Find group
     const group = await Group.findById(req.params.groupId);
-    if (!group) return res.status(404).json({ message: "Group not found" });
+    if (!group) {
+      return res.status(404).json({ message: "Group not found" });
+    }
 
-    const expense = new Expense({
+    // ✅ Create Expense class object
+    const expense = new GroupExpense(
+      paidById,
       description,
-      amount,
-      paidBy: paidById,
-      group: group._id,
-      splits: splits || [],
-    });
+      Number(amount),
+      new Date()
+    );
 
-    await expense.save();
-    await expense.populate("paidBy", "name");
+    // ✅ Convert class -> JSON to embed inside group
+    const expenseJSON = expense.toJSON();
 
+    // ✅ Push inside group.expenses[]
+    group.expenses.push(expenseJSON);
+
+    // ✅ Save group
+    await group.save();
+
+    // ✅ Send the new embedded expense back
     res.status(201).json({
-      _id: expense._id,
-      description: expense.description,
-      amount: expense.amount,
-      paidBy: expense.paidBy,
-      splits: expense.splits,
+      message: "Expense added successfully",
+      expense: expenseJSON,
     });
   } catch (err) {
-    res.status(500).json({ message: "Error adding expense", error: err.message });
+    res.status(500).json({
+      message: "Error adding expense",
+      error: err.message,
+    });
   }
 });
 

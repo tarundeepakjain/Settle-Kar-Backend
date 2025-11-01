@@ -19,6 +19,17 @@ class GroupService {
     // you can implement group delete with auth later if needed
     return await GroupModel.findOneAndDelete({ _id: groupId, createdBy: userId });
   }
+  
+  async addExpense({ groupId, expense }) {
+    const group = await GroupModel.findById(groupId);
+    if (!group) throw new Error("Group not found");
+
+    // ✅ push entire JSON (this is what you want)
+    group.expenses.push(expense.toJSON());
+
+    await group.save();
+    return group;
+  }
 }
 
 export default new GroupService();

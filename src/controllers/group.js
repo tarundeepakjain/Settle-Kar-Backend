@@ -94,6 +94,26 @@ class GroupController {
       res.status(400).json({ message: error.message });
     }
   };
+
+  addExpense = async (req, res) => {
+    try {
+      const { groupId, desc, amount, paidby } = req.body;
+
+      // Create Expense class object
+      const expense = new GroupExpense(paidby, desc, amount);
+
+      // Save inside group.expenses[]
+      const updatedGroup = await GroupService.addExpense({ groupId, expense });
+
+      res.status(200).json({
+        message: "Expense added successfully",
+        group: updatedGroup
+      });
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  };
+
 }
 
 export default new GroupController();
