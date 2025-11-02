@@ -190,8 +190,25 @@ router.post("/verify-otp", async (req, res) => {
   return res.status(200).json({ message: "OTP verified successfully!" });
 });
 router.get("/transaction",authenticate,async(req,res)=>{
-const {userid}=req.body;
-const transaction=userid.transactions.json();
-return transaction;
+try {
+  const userid=req.user.id;
+  const user=await Userm.findById(userid);
+  if(!user) return res.status(404).json({ error: "User not found" });
+  const formattedTransactions = user.transactions.map(tx => ({
+   // or custom label like "Group Transaction"
+      title: tx.data?.description || "No description",
+      amount: tx.data?.amount || 0,
+      date: tx.data?.time || tx.createdAt,
+    }));
+
+    return res.status(200).json({
+      message: "Transactions fetched successfully",
+      transactions: formattedTransactions,
+    });
+ 
+} catch (error) {
+   console.error(error);
+    return res.status(401).json({ error: "error" });
+}
 })
 export default router;
