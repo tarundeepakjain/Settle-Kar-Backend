@@ -41,7 +41,6 @@ export default class Group {
     this.updatedAt = updatedAt;
   }
 
-  /** Split equally among members */
   splitEqually(amount) {
     if (this.members.length === 0)
       throw new Error("No members to split amount.");
@@ -49,7 +48,7 @@ export default class Group {
     this.userBal = this.userBal.map((v) => v + increment);
   }
 
-  /** Split unequally */
+
   splitUnequally(amount, splitPrice) {
     const total = splitPrice.reduce((a, b) => a + b, 0);
     if (total !== amount || splitPrice.length !== this.members.length)

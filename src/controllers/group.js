@@ -20,7 +20,7 @@ class GroupController {
 
   createGroup = async (req, res) => {
     try {
-      const { name, description, members = [], createdBy } = req.body;
+      const { name, description, members, createdBy } = req.body;
       const gid = await this.generateId();
 
       const allMembers = new Set([...members, createdBy]);
