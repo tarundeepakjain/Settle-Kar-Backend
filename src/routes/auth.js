@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import nodemailer from "nodemailer";
 import User from "../tarun/user.js"; // ✅ Ensure this model exports mongoose.model('User', userSchema)
 import Userm from "../models/user.js";
+import authenticate from "../middleware/auth.js";
 const router = express.Router();
 const otpStore = new Map();
 
@@ -188,5 +189,9 @@ router.post("/verify-otp", async (req, res) => {
   otpStore.delete(email);
   return res.status(200).json({ message: "OTP verified successfully!" });
 });
-
+router.get("/transaction",authenticate,async(req,res)=>{
+const {userid}=req.body;
+const transaction=userid.transactions.json();
+return transaction;
+})
 export default router;

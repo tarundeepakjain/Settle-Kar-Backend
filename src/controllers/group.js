@@ -1,6 +1,6 @@
 import GroupService from "../services/group.js";
 import Group from "../models/group.js";
-import UserClass from "../tarun/userClass.js";   // ✅ Your custom class
+import UserClass from "../tarun/user.js";   // ✅ Your custom class
 import userModel from "../models/user.js";
 import { GroupExpense } from "../tarun/expense.js";
 
