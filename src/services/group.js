@@ -1,5 +1,5 @@
 import Group from "../tarun/group.js";
-
+import GroupModel from "../models/group.js";
 class GroupService {
   async createGroup(data) {
     console.log("GroupService.createGroup called");

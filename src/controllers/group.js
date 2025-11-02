@@ -1,7 +1,7 @@
 import GroupService from "../services/group.js";
 import Group from "../models/group.js";
 import User from "../models/user.js";
-
+import { GroupExpense } from "../tarun/expense.js";
 class GroupController {
   #groupId;
 
@@ -97,18 +97,22 @@ class GroupController {
 
   addExpense = async (req, res) => {
     try {
-      const { groupId, desc, amount, paidby } = req.body;
+     const { groupId } = req.params;
+      const { desc, amount, paidby } = req.body;
 
       // Create Expense class object
       const expense = new GroupExpense(paidby, desc, amount);
-
+      
+      console.log("expense created");
+      console.log(expense.toJSON());
       // Save inside group.expenses[]
       const updatedGroup = await GroupService.addExpense({ groupId, expense });
-
+       
       res.status(200).json({
         message: "Expense added successfully",
         group: updatedGroup
       });
+      console.log("done");
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
