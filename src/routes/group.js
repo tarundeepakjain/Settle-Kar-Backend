@@ -49,7 +49,7 @@ router.get("/:groupId",authenticate, async (req, res) => {
   }
 });
 
-router.get("/:groupId/expenses",authenticate, async (req, res) => {
+router.get("/:groupId/expenses", authenticate,async (req, res) => {
   try {
     const group = await Group.findById(req.params.groupId);
     if (!group) return res.status(404).json({ message: "Group not found" });
