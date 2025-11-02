@@ -97,6 +97,7 @@ class GroupController {
 
   addExpense = async (req, res) => {
     try {
+      console.log("expense route hit");
      const { groupId } = req.params;
       const { desc, amount, paidby } = req.body;
 
@@ -107,10 +108,16 @@ class GroupController {
       console.log(expense.toJSON());
       // Save inside group.expenses[]
       const updatedGroup = await GroupService.addExpense({ groupId, expense });
-       
+       const user=await User.findById(paidby);
+       const name = user ? user.name : "Unknown";
+        const addedExpense = {
+      ...expense.toJSON(),
+      paidBy: { _id: paidby, name },
+    };
       res.status(200).json({
         message: "Expense added successfully",
-        group: updatedGroup
+        group: updatedGroup,
+         expense: addedExpense,
       });
       console.log("done");
     } catch (error) {

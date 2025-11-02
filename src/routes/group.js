@@ -107,5 +107,5 @@ router.post("/:groupId/expenses", async (req, res) => {
     });
   }
 });
-router.post("/:groupId/add-expense",GroupController.addExpense);
+router.post("/:groupId/add-expense",authenticate,GroupController.addExpense);
 export default router;
