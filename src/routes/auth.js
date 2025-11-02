@@ -194,8 +194,9 @@ try {
   const userid=req.user.id;
   const user=await Userm.findById(userid);
   if(!user) return res.status(404).json({ error: "User not found" });
+
   const formattedTransactions = user.transactions.map(tx => ({
-   // or custom label like "Group Transaction"
+      type:tx.type || "prsnl",
       title: tx.data?.description || "No description",
       amount: tx.data?.amount || 0,
       date: tx.data?.time || tx.createdAt,
