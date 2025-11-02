@@ -9,7 +9,7 @@ const router = express.Router();
 const ACCESS_SECRET = process.env.ACCESS_SECRET || "ava";
 
 
-router.get("/my-groups", async (req, res) => {
+router.get("/my-groups",authenticate,async (req, res) => {
   try {
     const groups = await Group.find({ members: req.user.id }).populate("members", "name email");
     res.status(200).json(groups);
@@ -18,12 +18,12 @@ router.get("/my-groups", async (req, res) => {
   }
 });
 
-router.post("/new",  GroupController.createGroup);
+router.post("/new",authenticate,  GroupController.createGroup);
 router.post("/invite",  GroupController.Invite);
 router.post("/add-member",  GroupController.addMember);
 router.delete("/delete-member",  GroupController.deleteMember);
 
-router.get("/:groupId", async (req, res) => {
+router.get("/:groupId",authenticate, async (req, res) => {
   try {
     const group = await Group.findById(req.params.groupId)
       .populate("members", "name email")
@@ -49,7 +49,7 @@ router.get("/:groupId", async (req, res) => {
   }
 });
 
-router.get("/:groupId/expenses", async (req, res) => {
+router.get("/:groupId/expenses",authenticate, async (req, res) => {
   try {
     const group = await Group.findById(req.params.groupId);
     if (!group) return res.status(404).json({ message: "Group not found" });
