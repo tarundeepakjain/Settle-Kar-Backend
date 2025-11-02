@@ -9,7 +9,7 @@ def extract_bill():
         return jsonify({"error": "No file uploaded"}), 400
 
     file = request.files['file']
-    file_path = "temp_bill.png"
+    file_path = "testbill.png"
     file.save(file_path)
 
     result = extract(file_path)
