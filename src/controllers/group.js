@@ -1,7 +1,9 @@
 import GroupService from "../services/group.js";
 import Group from "../models/group.js";
-import User from "../models/user.js";
+import UserClass from "../tarun/userClass.js";   // ✅ Your custom class
+import userModel from "../models/user.js";
 import { GroupExpense } from "../tarun/expense.js";
+
 class GroupController {
   #groupId;
 
@@ -33,11 +35,12 @@ class GroupController {
         inviteid: gid,
       });
 
+      // ✅ Add group reference to each user
       for (const memberId of allMembers) {
-        const user = await User.findById(memberId);
-        if (user && !user.groups.includes(group._id)) {
-          user.groups.push(group._id);
-          await user.save();
+        const userDoc = await userModel.findById(memberId);
+        if (userDoc && !userDoc.groups.includes(group._id)) {
+          userDoc.groups.push(group._id);
+          await userDoc.save();
         }
       }
 
@@ -50,8 +53,8 @@ class GroupController {
   Invite = async (req, res) => {
     try {
       const { userid, inviteid } = req.body;
-      const user = await User.findById(userid);
-      if (!user) return res.status(404).json({ message: "User not found" });
+      const userDoc = await userModel.findById(userid);
+      if (!userDoc) return res.status(404).json({ message: "User not found" });
 
       const group = await Group.findOne({ inviteid });
       if (!group) return res.status(404).json({ message: "Invalid invite ID" });
@@ -62,9 +65,9 @@ class GroupController {
       group.members.push(userid);
       await group.save();
 
-      if (!user.groups.includes(group._id)) {
-        user.groups.push(group._id);
-        await user.save();
+      if (!userDoc.groups.includes(group._id)) {
+        userDoc.groups.push(group._id);
+        await userDoc.save();
       }
 
       res.status(200).json({ message: "User added to group successfully", group });
@@ -73,7 +76,6 @@ class GroupController {
     }
   };
 
-  /** ✅ Add member via service */
   addMember = async (req, res) => {
     try {
       const { groupId, userId } = req.body;
@@ -84,7 +86,6 @@ class GroupController {
     }
   };
 
-  /** ✅ Delete member via service */
   deleteMember = async (req, res) => {
     try {
       const { groupId, userId } = req.body;
@@ -95,36 +96,62 @@ class GroupController {
     }
   };
 
+  // ✅ ✅ FIXED ADD EXPENSE
   addExpense = async (req, res) => {
     try {
       console.log("expense route hit");
-     const { groupId } = req.params;
+
+      const { groupId } = req.params;
       const { desc, amount, paidby } = req.body;
 
-      // Create Expense class object
+      // ✅ Create Expense Class object
       const expense = new GroupExpense(paidby, desc, amount);
-      
+
       console.log("expense created");
       console.log(expense.toJSON());
-      // Save inside group.expenses[]
+
+      // ✅ Save inside group.expenses[]
       const updatedGroup = await GroupService.addExpense({ groupId, expense });
-       const user=await User.findById(paidby);
-       const name = user ? user.name : "Unknown";
-        const addedExpense = {
-      ...expense.toJSON(),
-      paidBy: { _id: paidby, name },
-    };
+
+      // ✅ Fetch user from DB
+      const userDoc = await userModel.findById(paidby);
+      if (!userDoc) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const name = userDoc.name;
+
+      // ✅ Store this group expense inside user's transactions[]
+      const userInstance = new UserClass(
+        userDoc.name,
+        userDoc.email,
+        userDoc.password,
+        userDoc.balance,
+        userDoc.transactions,
+        userDoc.groups,
+        userDoc._id
+      );
+
+      await userInstance.addTransaction("group", expense.toJSON());
+
+      // ✅ Prepare response object
+      const addedExpense = {
+        ...expense.toJSON(),
+        paidBy: { _id: paidby, name },
+      };
+
       res.status(200).json({
         message: "Expense added successfully",
         group: updatedGroup,
-         expense: addedExpense,
+        expense: addedExpense,
       });
+
       console.log("done");
     } catch (error) {
+      console.log(error);
       res.status(500).json({ message: error.message });
     }
   };
-
 }
 
 export default new GroupController();
