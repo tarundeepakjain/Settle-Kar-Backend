@@ -29,19 +29,19 @@ router.get("/:groupId", authenticate,async (req, res) => {
       .populate("members", "name email")
       .lean();
 
-    if (!group) return res.status(404).json({ message: "Group not found" });
+    // if (!group) return res.status(404).json({ message: "Group not found" });
 
-    const expenses = await Expense.find({ group: group._id })
-      .populate("paidBy", "name")
-      .sort({ createdAt: -1 });
+    // const expenses = await Expense.find({ group: group._id })
+    //   .populate("paidBy", "name")
+    //   .sort({ createdAt: -1 });
 
-    group.expenses = expenses.map((exp) => ({
-      _id: exp._id,
-      description: exp.description,
-      amount: exp.amount,
-      paidBy: exp.paidBy,
-      splits: exp.splits,
-    }));
+    // group.expenses = expenses.map((exp) => ({
+    //   _id: exp._id,
+    //   description: exp.description,
+    //   amount: exp.amount,
+    //   paidBy: exp.paidBy,
+    //   splits: exp.splits,
+    // }));
 
     res.status(200).json(group);
   } catch (err) {
