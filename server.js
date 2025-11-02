@@ -7,6 +7,8 @@ import mongo from "./src/db/mongo.js";
 import auth from "./src/routes/auth.js";
 import Group from "./src/routes/group.js";
 import split from "./src/routes/split.js";
+import userRoutes from "./src/routes/user.js";
+
 const app=express();
 app.use(express.json());
 const PORT=process.env.PORT || 5001;
@@ -37,6 +39,7 @@ app.use('/',home);
 app.use('/auth',auth);
 app.use('/group',Group);
 app.use('/split',split);
+app.use('/user',userRoutes);
 // app.use("/api", expenseRoutes);
 
 

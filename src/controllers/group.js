@@ -102,7 +102,7 @@ class GroupController {
       console.log("expense route hit");
 
       const { groupId } = req.params;
-      const { desc, amount, paidby } = req.body;
+      const { desc, amount, paidby } = req.body;//
 
       // ✅ Create Expense Class object
       const expense = new GroupExpense(paidby, desc, amount);
