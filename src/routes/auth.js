@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import nodemailer from "nodemailer";
 import User from "../tarun/user.js"; // ✅ Ensure this model exports mongoose.model('User', userSchema)
-
+import Userm from "../models/user.js";
 const router = express.Router();
 const otpStore = new Map();
 
@@ -42,7 +42,7 @@ router.post("/", async (req, res) => {
     if (exist) return res.status(400).json({ error: "Email already exists!" });
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new User({
+    const newUser = new Userm({
       name,
       email,
       password: hashedPassword,

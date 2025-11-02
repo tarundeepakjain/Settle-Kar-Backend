@@ -110,6 +110,7 @@ class GroupController {
       const updatedGroup = await GroupService.addExpense({ groupId, expense });
        const user=await User.findById(paidby);
        const name = user ? user.name : "Unknown";
+      
         const addedExpense = {
       ...expense.toJSON(),
       paidBy: { _id: paidby, name },

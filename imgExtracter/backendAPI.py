@@ -1,8 +1,6 @@
 from flask import Flask, request, jsonify
 from Extracter import extract
-
 app = Flask(__name__)
-
 @app.route('/extract', methods=['POST'])
 def extract_bill():
     if 'file' not in request.files:
