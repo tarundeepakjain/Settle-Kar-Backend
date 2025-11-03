@@ -13,7 +13,7 @@ const ACCESS_SECRET = process.env.ACCESS_SECRET || "ava";
 router.get("/my-groups",authenticate,async (req, res) => {
   try {
     const groups = await Group.find({ members: req.user.id }).populate("members", "name email ");
-    console.log(groups.json());
+   
     res.status(200).json(groups);
   } catch (err) {
     res.status(500).json({ message: "Error fetching groups", error: err.message });
