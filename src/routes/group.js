@@ -12,7 +12,8 @@ const ACCESS_SECRET = process.env.ACCESS_SECRET || "ava";
 
 router.get("/my-groups",authenticate,async (req, res) => {
   try {
-    const groups = await Group.find({ members: req.user.id }).populate("members", "name email");
+    const groups = await Group.find({ members: req.user.id }).populate("members", "name email ");
+    console.log(groups.json());
     res.status(200).json(groups);
   } catch (err) {
     res.status(500).json({ message: "Error fetching groups", error: err.message });
@@ -26,6 +27,7 @@ router.post("/join",authenticate,async(req,res)=>{
 const exist = await Group.findOne({ inviteid });
 if(!exist) return res.status(404).json({ message: "group not found" });
     const user=await User.findById(userid);
+    if(user.groups.includes(exist._id)) return res.status(400).json({message:"user already in the group"});
     user.groups.push(exist._id);
     exist.members.push(user._id);
     await exist.save();
