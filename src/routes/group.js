@@ -5,6 +5,7 @@ import Group from "../models/group.js";
 import Expense from "../models/expense.js";
 import authenticate from "../middleware/auth.js";
 import { GroupExpense } from "../tarun/expense.js";
+import User from "../models/user.js";
 const router = express.Router();
 const ACCESS_SECRET = process.env.ACCESS_SECRET || "ava";
 
@@ -17,7 +18,26 @@ router.get("/my-groups",authenticate,async (req, res) => {
     res.status(500).json({ message: "Error fetching groups", error: err.message });
   }
 });
+router.post("/join",authenticate,async(req,res)=>{
+  try {
+    const userid=req.user.id;
+    const {inviteid}=req.body;
+const exist = await Group.findOne({ inviteid });
+if(!exist) return res.status(404).json({ message: "group not found" });
+    const user=await User.findById(userid);
+    user.groups.push(exist._id);
+    exist.members.push(user._id);
+    await exist.save();
+  
+ await user.save();
+  console.log("done adding");
+  return res.status(201).json({message:"user added to group"});
 
+  } catch (err) {
+    res.status(500).json({ message: "Error adding user", error: err.message });
+  }
+
+});
 router.post("/new",authenticate,  GroupController.createGroup);
 router.post("/invite",  GroupController.Invite);
 router.post("/add-member",  GroupController.addMember);
