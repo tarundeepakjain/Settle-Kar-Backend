@@ -22,6 +22,7 @@ router.post("/join",authenticate,async(req,res)=>{
   try {
     const userid=req.user.id;
     const {inviteid}=req.body;
+    console.log("received body");
 const exist = await Group.findOne({ inviteid });
 if(!exist) return res.status(404).json({ message: "group not found" });
     const user=await User.findById(userid);
