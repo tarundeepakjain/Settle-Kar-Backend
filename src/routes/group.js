@@ -62,18 +62,27 @@ router.delete("/:groupId/delete-member", authenticate,async(req,res)=>{
     if(!member.groups.includes(req.params.groupId)){
       return res.status(404).json({ message: "member not found in group" });
     }
+    //removing that member
     group.members = group.members.filter(
       (m) => m.toString() !== memberid.toString()
     );
     await group.save();
 
-    // 7️⃣ Remove group from member’s group list (if stored in user model)
+    // remove grp referencce
     if (member.groups && member.groups.includes(req.params.groupId)) {
       member.groups = member.groups.filter(
         (g) => g.toString() !== req.params.groupId.toString()
       );
-      await member.save();
+
     }
+    //remove that grp transaction
+    if (member.transactions && member.transactions.length > 0) {
+      member.transactions = member.transactions.filter(
+        (txn) => txn.groupId?.toString() !== req.params.groupId.toString()
+      );
+    }
+
+    await member.save();
 
     // 8️⃣ Respond success
     res.status(200).json({ message: "Member removed successfully" });
@@ -100,7 +109,16 @@ router.delete("/:groupId",authenticate,async(req,res)=>{
       { _id: { $in: group.members } },
       { $pull: { groups: req.params.groupId } } 
     );
-    
+     const members = await User.find({ _id: { $in: group.members } });
+
+    for (const member of members) {
+      if (member.transactions && member.transactions.length > 0) {
+        member.transactions = member.transactions.filter(
+          (txn) => txn.groupId?.toString() !== req.params.groupId.toString()
+        );
+        await member.save();
+      }
+    }
     await Group.findByIdAndDelete(req.params.groupId);
     
     res.status(200).json({ message: "Group deleted successfully" });

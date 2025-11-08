@@ -138,6 +138,8 @@ class GroupController {
       const addedExpense = {
         ...expense.toJSON(),
         paidBy: { _id: paidby, name },
+        groupId,
+
       };
 
       res.status(200).json({
