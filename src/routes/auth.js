@@ -111,7 +111,7 @@ router.post("/refresh", async (req, res) => {
 
   try {
     const payload = jwt.verify(refreshToken, REFRESH_SECRET);
-    const existingUser = await User.findById(payload.id);
+    const existingUser = await Userm.findById(payload.id);
     if (!existingUser)
       return res.status(401).json({ error: "User not found" });
 
@@ -132,7 +132,7 @@ router.get("/me", async (req, res) => {
     if (!auth) return res.status(401).json({ error: "No auth header" });
     const token = auth.split(" ")[1];
     const payload = jwt.verify(token, ACCESS_SECRET);
-    const user = await User.findById(payload.id).select(
+    const user = await Userm.findById(payload.id).select(
       "-password -currentRefreshToken"
     );
     if (!user) return res.status(404).json({ error: "User not found" });

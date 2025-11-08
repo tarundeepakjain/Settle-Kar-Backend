@@ -44,8 +44,73 @@ if(!exist) return res.status(404).json({ message: "group not found" });
 router.post("/new",authenticate,  GroupController.createGroup);
 router.post("/invite",  GroupController.Invite);
 router.post("/add-member",  GroupController.addMember);
-router.delete("/delete-member",  GroupController.deleteMember);
+router.delete("/:groupId/delete-member", authenticate,async(req,res)=>{
+  try {
+    const {memberid}=req.body;
+    const group = await Group.findById(req.params.groupId)
+  const adminid=req.user.id;
+   if (!group) {
+      return res.status(404).json({ message: "Group not found" });
+    }
+    if (group.createdBy.toString() !== adminid) {
+      return res.status(403).json({ message: "Unauthorized — only the creator can delete this group" });
+    }
+    const member=await User.findById(memberid);
+    if(!member){
+      return res.status(404).json({ message: "member not found" });
+    }
+    if(!member.groups.includes(req.params.groupId)){
+      return res.status(404).json({ message: "member not found in group" });
+    }
+    group.members = group.members.filter(
+      (m) => m.toString() !== memberid.toString()
+    );
+    await group.save();
 
+    // 7️⃣ Remove group from member’s group list (if stored in user model)
+    if (member.groups && member.groups.includes(req.params.groupId)) {
+      member.groups = member.groups.filter(
+        (g) => g.toString() !== req.params.groupId.toString()
+      );
+      await member.save();
+    }
+
+    // 8️⃣ Respond success
+    res.status(200).json({ message: "Member removed successfully" });
+    
+  } catch (error) {
+    console.error("Error removing member:", error);
+    res
+      .status(500)
+      .json({ message: "Server error while removing member", error: error.message });
+  
+  }
+});
+router.delete("/:groupId",authenticate,async(req,res)=>{
+  try {
+    const group = await Group.findById(req.params.groupId);
+   const userid=req.user.id;
+   if (!group) {
+      return res.status(404).json({ message: "Group not found" });
+    }
+    if (group.createdBy.toString() !== userid) {
+      return res.status(403).json({ message: "Unauthorized — only the creator can delete this group" });
+    }
+    await User.updateMany(
+      { _id: { $in: group.members } },
+      { $pull: { groups: req.params.groupId } } 
+    );
+    
+    await Group.findByIdAndDelete(req.params.groupId);
+    
+    res.status(200).json({ message: "Group deleted successfully" });
+    
+  } catch (error) {
+    console.error("Error deleting group:", error);
+    res.status(500).json({ message: "Server error while deleting group" });
+  }
+   
+})
 router.get("/:groupId", authenticate,async (req, res) => {
   try {
     const group = await Group.findById(req.params.groupId)
