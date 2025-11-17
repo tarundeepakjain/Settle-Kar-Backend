@@ -62,7 +62,7 @@ router.post("/", async (req, res) => {
 
   try {
     const exist = await User.findOne({ email });
-    if (exist) return res.status(400).json({ error: "Email already exists!" });
+    if (exist) return res.status(400).json({ MessageEvent: "Email already exists!" });
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = new Userm({
