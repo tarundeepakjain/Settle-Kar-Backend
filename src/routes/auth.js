@@ -18,7 +18,7 @@ async function sendOtpEmail(email, otp) {
       "content-type": "application/json",
     },
     body: JSON.stringify({
-      sender: { name: "SettleKar", email: "no-reply@settlekar.com" },
+      sender: { name: "SettleKar", email: "settlekarofficial@gmail.com" },
       to: [{ email }],
       subject: "Settle-Kar OTP",
       htmlContent: `
@@ -62,7 +62,7 @@ router.post("/", async (req, res) => {
 
   try {
     const exist = await User.findOne({ email });
-    if (exist) return res.status(400).json({ error: "Email already exists!" });
+    if (exist) return res.status(400).json({ MessageEvent: "Email already exists!" });
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = new Userm({
