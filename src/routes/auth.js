@@ -18,7 +18,7 @@ async function sendOtpEmail(email, otp) {
       "content-type": "application/json",
     },
     body: JSON.stringify({
-      sender: { name: "SettleKar", email: "no-reply@settlekar.com" },
+      sender: { name: "SettleKar", email: "settlekarofficial@gmail.com" },
       to: [{ email }],
       subject: "Settle-Kar OTP",
       htmlContent: `
