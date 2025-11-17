@@ -93,17 +93,33 @@ export default class Expense {
 
 export class GroupExpense extends Expense {
   #paidby;
+  splitAmong = [];
 
-  constructor(paidby, desc = "", amount = 0, time = null) {
+  constructor(paidby, desc = "", amount = 0, time = null, splitAmong = []) {
     super(desc, amount, time);
     this.#paidby = paidby;
+
+    // Ensure splitAmong is an array of string IDs
+    if (!Array.isArray(splitAmong)) {
+      throw new TypeError("splitAmong must be an array of userIds");
+    }
+    this.splitAmong = splitAmong.map(id => id.toString());
   }
 
+  // ----- Serializers -----
   toJSON() {
-    return { ...super.toJSON(), paidby: this.#paidby };
+    return { 
+      ...super.toJSON(), 
+      paidby: this.#paidby,
+      splitAmong: this.splitAmong   // ⬅️ added
+    };
   }
 
-  toDBObject(data={ ...super.toDBObject(), paidby: this.#paidby }) {
+  toDBObject(data = { 
+    ...super.toDBObject(), 
+    paidby: this.#paidby,
+    splitAmong: this.splitAmong    // ⬅️ added
+  }) {
     return data;
   }
 
