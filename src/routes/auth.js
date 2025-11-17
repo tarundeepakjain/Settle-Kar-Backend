@@ -9,14 +9,34 @@ import Otp from "../models/otp.js";
 const router = express.Router();
 const otpStore = new Map();
 
-const transporter = nodemailer.createTransport({
-  host: "smtp-relay.brevo.com",
-  port:587,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
+async function sendOtpEmail(email, otp) {
+  const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+    method: "POST",
+    headers: {
+      "accept": "application/json",
+      "api-key": process.env.BREVO_API_KEY,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      sender: { name: "SettleKar", email: "no-reply@settlekar.com" },
+      to: [{ email }],
+      subject: "Settle-Kar OTP",
+      htmlContent: `
+        <div style="font-family:Arial,sans-serif">
+          <h2>Your OTP for Settle-Kar Signup is</h2>
+          <h1 style="color:#4CAF50">${otp}</h1>
+          <p>This OTP is valid for 5 minutes.</p>
+        </div>
+      `,
+    }),
+  });
+
+  if (!response.ok) {
+    const errText = await response.text();
+    console.error("Brevo Error:", errText);
+    throw new Error("Failed to send OTP via Brevo API");
+  }
+}
 
 const ACCESS_SECRET = process.env.ACCESS_SECRET || "ava";
 const REFRESH_SECRET = process.env.REFRESH_SECRET || "ava";
@@ -152,18 +172,7 @@ router.post("/send-otp", async (req, res) => {
     await Otp.deleteMany({ email });
     await Otp.create({ email, otp });
  
-    await transporter.sendMail({
-      from: `"SettleKar" <${process.env.EMAIL_USER}>`,
-      to: email,
-      subject: "Settle-Kar otp",
-      html: `
-        <div style="font-family:Arial,sans-serif">
-          <h2>Your otp for Settle-Kar Signup is</h2>
-          <h1 style="color:#4CAF50">${otp}</h1>
-          <p>This OTP is valid for 5 minutes.</p>
-        </div>
-      `,
-    });
+    await sendOtpEmail(email,otp);
     res.json({ message: "OTP sent successfully" });
   } catch (err) {
     console.log(err);
