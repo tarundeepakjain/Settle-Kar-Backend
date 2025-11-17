@@ -6,11 +6,19 @@ const groupSchema = new mongoose.Schema(
     name: { type: String, required: true },
     description: { type: String },
     balance: { type: Number, default: 0 },
-    userBal: [{ type: Number, default: 0 }],
     members: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
-    expenses: [{paidby: { type: String },description: { type: String },amount: { type: Number },time: { type: Date }}], // can be Expense ref later
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     inviteid: { type: String, unique: true },
+    userBal: [{userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },balance: { type: Number, default: 0 }}],
+    expenses: [
+      {
+        paidby: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+        description: String,
+        amount: Number,
+        time: Date,
+        splitAmong: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }]
+      }
+    ],
   },
   { timestamps: true }
 );

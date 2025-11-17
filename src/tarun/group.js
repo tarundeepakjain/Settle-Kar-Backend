@@ -41,33 +41,40 @@ export default class Group {
     this.updatedAt = updatedAt;
   }
 
-  splitEqually(amount) {
-    if (this.members.length === 0)
-      throw new Error("No members to split amount.");
-    const increment = amount / this.members.length;
-    this.userBal = this.userBal.map((v) => v + increment);
+  updateBalanceEqual(amount, splitAmong) {
+    const splitCount = splitAmong.length;
+    const share = amount / splitCount;
+
+    this.userBal = this.userBal.map(entry => {
+      if (splitAmong.includes(entry.userId.toString())) {
+        return {
+          userId: entry.userId,
+          balance: entry.balance + share
+        };
+      }
+      return entry;
+    });
   }
 
-
-  splitUnequally(amount, splitPrice) {
-    const total = splitPrice.reduce((a, b) => a + b, 0);
-    if (total !== amount || splitPrice.length !== this.members.length)
-      throw new Error("Invalid split amounts.");
-    for (let i = 0; i < this.members.length; i++) {
-      this.userBal[i] += splitPrice[i];
-    }
-  }
 
   /** Add an expense */
-  addExpense(expense, splitPrice = []) {
+  addExpense(expense) {
     if (!(expense instanceof GroupExpense))
       throw new TypeError("Expense must be instance of GroupExpense");
+
     const amount = expense.amount;
-    if (amount <= 0) throw new Error("Expense must be positive");
+    const splitAmong = expense.splitAmong;
+
+    if (!Array.isArray(splitAmong) || splitAmong.length === 0)
+      throw new Error("splitAmong must be a non-empty array");
+
+    // save expense
     this.#expenses.push(expense);
-    if (splitPrice.length === 0) this.splitEqually(amount);
-    else this.splitUnequally(amount, splitPrice);
+
+    // update balances
+    this.updateBalanceEqual(amount, splitAmong);
   }
+
 
   /** Add member */
   addMember(user) {
@@ -86,13 +93,15 @@ export default class Group {
       createdBy: this.createdBy,
       inviteid: this.inviteid,
       members: this.members,
-      userBal: this.userBal,
+      userBal: this.userBal.map(u => ({
+        userId: u.userId,
+        balance: u.balance
+      })),
       balance: this.#balance,
-      expenses: this.#expenses.map((e) =>
-        typeof e.toJSON === "function" ? e.toJSON() : e
-      ),
+      expenses: this.#expenses.map(e => e.toJSON()),
     };
   }
+
 
   /** Save to MongoDB */
   async save() {

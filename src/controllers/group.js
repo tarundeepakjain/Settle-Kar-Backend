@@ -102,16 +102,26 @@ class GroupController {
       console.log("expense route hit");
 
       const { groupId } = req.params;
-      const { desc, amount, paidby } = req.body;//
+      const { desc, amount, paidby, splitAmong } = req.body;
 
-      // ✅ Create Expense Class object
-      const expense = new GroupExpense(paidby, desc, amount);
+      const expense = new GroupExpense(
+        paidby,
+        desc,
+        amount,
+        new Date(),
+        splitAmong
+      );
+
 
       console.log("expense created");
       console.log(expense.toJSON());
 
       // ✅ Save inside group.expenses[]
-      const updatedGroup = await GroupService.addExpense({ groupId, expense });
+      const updatedGroup = await GroupService.addExpense({
+        groupId,
+        expense
+      });
+
 
       // ✅ Fetch user from DB
       const userDoc = await userModel.findById(paidby);

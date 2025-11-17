@@ -1,15 +1,17 @@
-// models/expenseModel.js
 import mongoose from "mongoose";
 
-const expenseSchema = new mongoose.Schema(
-  {
-    description: { type: String, required: true },
-    amount: { type: Number, required: true, min: 0 },
-    time: { type: Date, default: Date.now },
-    paidby: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null }, // only for GroupExpense
-  },
-  { timestamps: true }
-);
+const expenseSchema = new mongoose.Schema({
+  description: { type: String },
+  amount: { type: Number, required: true },
+  time: { type: Date, default: Date.now },
 
-const expenseModel = mongoose.model("Expense", expenseSchema);
-export default expenseModel;
+  // NEW FIELD
+  paidby: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+
+  // NEW FIELD
+  splitAmong: [
+    { type: mongoose.Schema.Types.ObjectId, ref: "User" }
+  ]
+}, { timestamps: true });
+
+export default mongoose.model("Expense", expenseSchema);
