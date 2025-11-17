@@ -5,6 +5,7 @@ import nodemailer from "nodemailer";
 import User from "../tarun/user.js"; // ✅ Ensure this model exports mongoose.model('User', userSchema)
 import Userm from "../models/user.js";
 import authenticate from "../middleware/auth.js";
+import Otp from "../models/otp.js";
 const router = express.Router();
 const otpStore = new Map();
 
@@ -36,7 +37,7 @@ function generateRefreshToken(user) {
 }
 
 router.post("/", async (req, res) => {
-  const { name, email, password } = req.body;
+  const { name, email, password} = req.body;
 
   try {
     const exist = await User.findOne({ email });
@@ -142,53 +143,49 @@ router.get("/me", async (req, res) => {
     return res.status(401).json({ error: "Invalid access token" });
   }
 });
-
-router.post("/forgot", async (req, res) => {
+router.post("/send-otp", async (req, res) => {
   try {
     const { email } = req.body;
-    const user = await User.findOne({ email });
-    if (!user)
-      return res.status(400).json({ error: "Email not registered" });
-
     const otp = generateOTP();
-    otpStore.set(email, { otp, expiresAt: Date.now() + 5 * 60 * 1000 });
 
+    await Otp.deleteMany({ email });
+    await Otp.create({ email, otp });
+ 
     await transporter.sendMail({
       from: `"SettleKar" <${process.env.EMAIL_USER}>`,
       to: email,
-      subject: "Password Reset OTP",
+      subject: "Settle-Kar otp",
       html: `
         <div style="font-family:Arial,sans-serif">
-          <h2>OTP Verification for Resetting Password on SettleKar</h2>
-          <p>Your One-Time Password (OTP) is:</p>
+          <h2>Your otp for Settle-Kar Signup is</h2>
           <h1 style="color:#4CAF50">${otp}</h1>
           <p>This OTP is valid for 5 minutes.</p>
         </div>
       `,
     });
-    return res.status(200).json({ message: "OTP sent to email!" });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: "Failed to send OTP" });
+    res.json({ message: "OTP sent successfully" });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "Failed to send OTP" });
   }
 });
 
+// --- VERIFY OTP ---
 router.post("/verify-otp", async (req, res) => {
-  const { email, otp } = req.body;
-  const record = otpStore.get(email);
-  if (!record)
-    return res
-      .status(400)
-      .json({ error: "OTP not found or expired. Please try again." });
-  if (Date.now() > record.expiresAt) {
-    otpStore.delete(email);
-    return res.status(400).json({ error: "OTP expired" });
+  try {
+    const { email, otp } = req.body;
+    const record = await Otp.findOne({ email, otp });
+
+    if (!record) return res.status(400).json({ message: "Invalid or expired OTP" });
+
+    await Otp.deleteMany({ email }); // clear OTPs once verified
+    res.json({ message: "OTP verified successfully" });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "OTP verification failed" });
   }
-  if (parseInt(otp) !== record.otp)
-    return res.status(400).json({ error: "Invalid OTP" });
-  otpStore.delete(email);
-  return res.status(200).json({ message: "OTP verified successfully!" });
 });
+
 router.get("/transaction",authenticate,async(req,res)=>{
 try {
   const userid=req.user.id;
