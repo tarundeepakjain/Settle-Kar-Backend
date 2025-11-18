@@ -49,8 +49,14 @@ class UserController {
   addPersonalTransaction = async (req, res) => {
     try {
       const userId = req.user.id;   // ✅ from JWT
-      const { desc, amount, category } = req.body;
-      const personalExpense = new Expense(desc,amount);
+      const { description, amount } = req.body;
+
+      if (!description || !amount) {
+        return res.status(400).json({ message: "Description and amount required" });
+      }
+
+      const personalExpense = new Expense(description, amount);
+
 
       console.log("expense created");
       console.log(personalExpense.toJSON());

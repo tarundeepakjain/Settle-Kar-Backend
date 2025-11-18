@@ -236,30 +236,25 @@ router.post("/change-password", async (req, res) => {
       return res.status(400).json({ message: "Email and new password required" });
     }
 
-    // Check if user exists
+    // Use mongoose model (NOT the class!)
     const user = await Userm.findOne({ email });
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
+    if (!user) return res.status(404).json({ message: "User not found" });
 
-    // Hash the new password
     const hashed = await bcrypt.hash(newPassword, 10);
 
-    // Update password
     user.password = hashed;
-
-    // Also logout from all devices by clearing refresh token
     user.currentRefreshToken = null;
 
     await user.save();
 
-    return res.json({ message: "Password updated successfully" });
+    res.json({ message: "Password updated successfully" });
 
   } catch (err) {
-    console.error(err);
+    console.error("Change Password Error:", err);
     res.status(500).json({ message: "Failed to change password" });
   }
 });
+
 
 router.get("/transaction",authMiddleware,async(req,res)=>{
 try {
