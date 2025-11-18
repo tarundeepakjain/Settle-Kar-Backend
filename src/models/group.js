@@ -13,9 +13,9 @@ const groupSchema = new mongoose.Schema(
     expenses: [
       {
         paidby: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-        description: String,
-        amount: Number,
-        time: Date,
+        description: {type: String},
+        amount:{type:Number},
+        time: {type:Date},
         splitAmong: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }]
       }
     ],

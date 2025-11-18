@@ -4,10 +4,11 @@ import bcrypt from "bcryptjs";
 import nodemailer from "nodemailer";
 import User from "../tarun/user.js"; // ✅ Ensure this model exports mongoose.model('User', userSchema)
 import Userm from "../models/user.js";
-import authenticate from "../middleware/auth.js";
+import authMiddleware from "../middleware/auth.js";
 import Otp from "../models/otp.js";
 const router = express.Router();
 const otpStore = new Map();
+
 
 async function sendOtpEmail(email, otp) {
   const response = await fetch("https://api.brevo.com/v3/smtp/email", {
@@ -148,6 +149,36 @@ router.post("/refresh", async (req, res) => {
   }
 });
 
+router.put("/edit", authMiddleware, async (req, res) => {
+  // console.log("Edit route reached");
+  // console.log("req.user =", req.user);
+
+  try {
+    const userId = req.user.id;
+    const { name } = req.body;
+
+    const user = await Userm.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    user.name = name || user.name;
+    await user.save();
+
+    res.json({
+      message: "Profile updated successfully",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Server error occurred" });
+  }
+});
+
+
 router.get("/me", async (req, res) => {
   try {
     const auth = req.headers.authorization;
@@ -171,7 +202,7 @@ router.post("/send-otp", async (req, res) => {
 
     await Otp.deleteMany({ email });
     await Otp.create({ email, otp });
- 
+
     await sendOtpEmail(email,otp);
     res.json({ message: "OTP sent successfully" });
   } catch (err) {
@@ -196,14 +227,48 @@ router.post("/verify-otp", async (req, res) => {
   }
 });
 
-router.get("/transaction",authenticate,async(req,res)=>{
+// --- CHANGE PASSWORD (after OTP verification) ---
+router.post("/change-password", async (req, res) => {
+  try {
+    const { email, newPassword } = req.body;
+
+    if (!email || !newPassword) {
+      return res.status(400).json({ message: "Email and new password required" });
+    }
+
+    // Check if user exists
+    const user = await Userm.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Hash the new password
+    const hashed = await bcrypt.hash(newPassword, 10);
+
+    // Update password
+    user.password = hashed;
+
+    // Also logout from all devices by clearing refresh token
+    user.currentRefreshToken = null;
+
+    await user.save();
+
+    return res.json({ message: "Password updated successfully" });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to change password" });
+  }
+});
+
+router.get("/transaction",authMiddleware,async(req,res)=>{
 try {
   const userid=req.user.id;
   const user=await Userm.findById(userid);
   if(!user) return res.status(404).json({ error: "User not found" });
-  
+
   const formattedTransactions = user.transactions.map(tx => ({
-      type:tx.type || "prsnl",   
+      type:tx.type || "prsnl",
       title: tx.data?.description || "No description",
       amount: tx.data?.amount || 0,
       date: tx.data?.time || tx.createdAt,
@@ -213,7 +278,7 @@ try {
       message: "Transactions fetched successfully",
       transactions: formattedTransactions,
     });
- 
+
 } catch (error) {
    console.error(error);
     return res.status(401).json({ error: "error" });

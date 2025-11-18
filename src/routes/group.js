@@ -156,4 +156,9 @@ router.get("/:groupId", authenticate,async (req, res) => {
 });
 
 router.post("/:groupId/add-expense",authenticate,GroupController.addExpense);
+router.post("/:groupId/add-expense",authenticate,async(req,res)=>{
+  const userid=req.user.id;
+  const groupid=req.params.groupId;
+  
+})
 export default router;
