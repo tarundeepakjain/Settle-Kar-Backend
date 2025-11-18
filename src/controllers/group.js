@@ -122,65 +122,64 @@ class GroupController {
    * ADD EXPENSE
    ----------------------------------------- */
   addExpense = async (req, res) => {
-    try {
-      const { groupId } = req.params;
-      const { desc, amount, paidby, splitAmong } = req.body;
+  try {
+    const { groupId } = req.params;
+    const { desc, amount, paidby, splitAmong } = req.body;
 
-      // ensure group exists
-      const groupDoc = await GroupModel.findById(groupId);
-      if (!groupDoc) return res.status(404).json({ message: "Group not found" });
+    // 1️⃣ Validate group
+    const groupDoc = await GroupModel.findById(groupId);
+    if (!groupDoc) return res.status(404).json({ message: "Group not found" });
 
-      // ensure paidby is part of group
-      if (!groupDoc.members.includes(paidby)) {
-        return res.status(403).json({ message: "Payer not in group" });
-      }
-
-      // ensure splitAmong members are valid
-      for (const id of splitAmong) {
-        if (!groupDoc.members.includes(id)) {
-          return res.status(400).json({ message: `User ${id} not member` });
-        }
-      }
-
-      // prepare GroupExpense
-      const expense = new GroupExpense(
-        paidby,
-        desc,
-        amount,
-        new Date(),
-        splitAmong
-      );
-
-      // use service
-      const updatedGroup = await GroupService.addExpense({
-        groupId,
-        expense
-      });
-
-      // add transaction to user
-      const userDoc = await userModel.findById(paidby);
-      const userInstance = new UserClass(
-        userDoc.name,
-        userDoc.email,
-        userDoc.password,
-        userDoc.balance,
-        userDoc.transactions,
-        userDoc.groups,
-        userDoc._id
-      );
-      await userInstance.addTransaction("group", expense.toJSON());
-
-      res.status(200).json({
-        message: "Expense added",
-        group: updatedGroup,
-        expense: expense.toJSON(),
-      });
-
-    } catch (err) {
-      console.log(err);
-      res.status(500).json({ message: err.message });
+    // 2️⃣ Validate payer
+    if (!groupDoc.members.includes(paidby)) {
+      return res.status(403).json({ message: "Payer not in group" });
     }
-  };
-}
 
+    // 3️⃣ Validate all split users
+    for (const uid of splitAmong) {
+      if (!groupDoc.members.includes(uid)) {
+        return res.status(400).json({ message: `User ${uid} not member` });
+      }
+    }
+
+    // 4️⃣ Build expense object EXACTLY matching your schema
+    const expenseObj = {
+      paidby,
+      description: desc,
+      amount: Number(amount),
+      time: new Date(),
+      splitAmong,
+    };
+
+    // 5️⃣ Save inside group
+    groupDoc.expenses.push(expenseObj);
+    await groupDoc.save();
+
+    // 6️⃣ Add separate user transaction record
+    const userDoc = await userModel.findById(paidby);
+    const userInstance = new UserClass(
+      userDoc.name,
+      userDoc.email,
+      userDoc.password,
+      userDoc.balance,
+      userDoc.transactions,
+      userDoc.groups,
+      userDoc._id
+    );
+
+    await userInstance.addTransaction("group", expenseObj);
+
+    // 7️⃣ Respond properly
+    res.status(200).json({
+      message: "Expense added",
+      expense: expenseObj,
+      groupId,
+    });
+
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: err.message });
+  }
+};
+}
 export default new GroupController();
