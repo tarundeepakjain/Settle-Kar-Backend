@@ -2,8 +2,7 @@ import Group from "../tarun/group.js";
 import GroupModel from "../models/group.js";
 
 class GroupService {
-
-  async createGroup(data) {
+  async createGroup(data){
     const group = new Group({
       ...data,
       userBal: data.members.map(id => ({ userId: id, balance: 0 }))
@@ -24,7 +23,6 @@ class GroupService {
     const doc = await GroupModel.findById(groupId);
     if (!doc) throw new Error("Group not found");
 
-    // Create Class instance from DB document
     const group = new Group({
       gid: doc.gid,
       name: doc.name,
