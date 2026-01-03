@@ -54,12 +54,10 @@ This repository contains the **backend implementation**, built with a focus on c
 
 This is a **group project** collaboratively developed by the following contributors:
 
-1. [Contribu](https://github.com/username1)
-2. [Contributor Name 2](https://github.com/username2)
-3. [Contributor Name 3](https://github.com/username3)
-4. [Contributor Name 4](https://github.com/username4)
-5. [Contributor Name 5](https://github.com/username5)
-6. [Contributor Name 6](https://github.com/username6)
+1. [Tarun Jain](https://github.com/tarundeepakjain)
+2. [Avadhesh Nagar](https://github.com/avadhesh11)
+3. [Dev Joshi](https://github.com/devj-arch)
+4. [Aahan Poddar](https://github.com/aehnz)
 
 ---
 
